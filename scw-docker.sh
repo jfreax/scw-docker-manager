@@ -65,6 +65,18 @@ function deploy {
 }
 
 ##
+# Show logs of profile on a given server
+#
+# Arguments: <server name or id>
+##
+function logs {
+  name=$2
+
+  scw exec --gateway=edge ${name} \
+    'if [ -f ~/.scw-docker.deploy ]; then cd ~/docker/$(cat ~/.scw-docker.deploy)/ && docker-compose logs; fi'
+}
+
+##
 # List all available private images
 ##
 function images {
@@ -142,6 +154,9 @@ case $1 in
     ;;
   deploy)
     deploy $@
+    ;;
+  logs)
+    logs $@
     ;;
   images)
     images $@
