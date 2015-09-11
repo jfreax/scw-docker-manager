@@ -19,7 +19,7 @@ function ps {
   exit 0
 }
 
-function start {
+function deploy {
   name=$2
   image=$3
 
@@ -47,7 +47,11 @@ function start {
 
   echo "Starting container"
   scw exec --gateway=edge ${id} \
-    "cd ~/docker/${image}/; docker-compose up -d"
+    "cd ~/docker/${image}/; \
+     if [ -f ./prepare.sh ]; then \
+       ./prepare.sh; \
+     fi; \
+    docker-compose up -d"
   exit $?
 }
 
@@ -62,18 +66,36 @@ function profiles {
   exit 0
 }
 
+function install {
+  name=$2
+  package=$3
+  if [ -z $name ] || [ -z $package]; then
+  	echo "Missing arguments"
+  fi
+
+  # Check if binary package is available
+  scw exec --gateway=edge repository \
+    "equery list '$package'; if [ $? ]; then emerge $package; fi"
+
+  scw exec --gateway=edge $name \
+    "emerge $package"
+}
+
 case $1 in
   ps)
     ps $@
     ;;
-  start)
-	start $@
+  deploy)
+	deploy $@
 	;;
   images)
     images $@
     ;;
   profiles)
     profiles $@
+    ;;
+  install)
+    install $@
     ;;
   *)
     echo "Unknown command"
