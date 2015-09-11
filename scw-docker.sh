@@ -1,5 +1,8 @@
 #!/bin/bash
 
+##
+# List all running docker container of all running servers
+##
 function ps {
   if [ $2 = '-a' ]; then
     show_all=true
@@ -19,16 +22,21 @@ function ps {
   exit 0
 }
 
+##
+# Starts a new server and deploys a docker profile
+#
+# Arguments: <server-name> <deployment-profile>
+##
 function deploy {
   name=$2
-  image=$3
+  profile=$3
 
   if [ -z $name ]; then
     echo "Missing arguments"
   fi
 
-  if [ -z $image ]; then
-    image=$name
+  if [ -z $profile ]; then
+    profile=$name
   fi
 
   echo "Starting new server"
@@ -47,25 +55,37 @@ function deploy {
 
   echo "Starting container"
   scw exec --gateway=edge ${id} \
-    "cd ~/docker/${image}/; \
+    "cd ~/docker/${profile}/; \
      if [ -f ./prepare.sh ]; then \
        ./prepare.sh; \
      fi; \
-    docker-compose up -d"
+     docker-compose up -d;
+     echo ${profile} > ~/.scw-docker.deploy"
   exit $?
 }
 
+##
+# List all available private images
+##
 function images {
   scw exec --gateway=edge repository "curl http://hub.jdsoft.de/v1/search" | jq '.results'
   exit $?
 }
 
+##
+# List all available docker profiles
+##
 function profiles {
   scw exec --gateway=edge repository \
     "su - jens -c \"cd /home/jens/docker/; git pull > /dev/null 2> /dev/null \"; cd /home/jens/docker/; ls"
   exit 0
 }
 
+##
+# Installs a new system package on a started server
+#
+# Arguments: <server-name or id> <package name>
+## 
 function install {
   name=$2
   package=$3
@@ -81,6 +101,9 @@ function install {
     "emerge $package"
 }
 
+##
+# Updates the system on all servers
+##
 function update {
   pid=$(scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 pgrep emerge")
   if [ ! -z "$pid" ]; then
@@ -103,6 +126,11 @@ function update {
   fi
 }
 
+##
+# Start a ssh connection to a given server
+#
+# Arguments: <server name or id>
+##
 function ssh {
   name=$2
   scw exec --gateway=edge $name /bin/bash
