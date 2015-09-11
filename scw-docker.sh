@@ -236,7 +236,7 @@ EOF
 ) > /tmp/scw-docker.$name.nginx.tmp
       #scw cp /tmp/scw-docker.$name.nginx.tmp edge:/etc/nginx/sites-available/${name}_${ip}
       scp /tmp/scw-docker.$name.nginx.tmp root@212.47.244.17:/etc/nginx/sites-available/${name}_${ip}
-      scw exec server:edge "ln -s /etc/nginx/sites-available/${name}_${ip} /etc/nginx/sites-enabled/"
+      scw exec server:edge "ln -sf /etc/nginx/sites-available/${name}_${ip} /etc/nginx/sites-enabled/"
       scw exec server:edge "/etc/init.d/nginx reload"
       ;;
     *)
