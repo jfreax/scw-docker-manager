@@ -59,7 +59,7 @@ function deploy {
      if [ -f ./prepare.sh ]; then \
        ./prepare.sh; \
      fi; \
-     docker-compose up -d;
+     docker-compose up -d; \
      echo ${profile} > ~/.scw-docker.deploy"
   exit $?
 }
