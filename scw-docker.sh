@@ -71,7 +71,7 @@ function run {
        ./prepare.sh; \
      fi; \
      docker-compose up -d; \
-     echo \"${profile}\" > ~/.scw-docker.deploy \
+     echo \"${profile}\" > ~/.scw-docker.deploy; \
      if [ -f ./post.sh ]; then \
        ./post.sh; \
      fi; "
