@@ -95,18 +95,27 @@ function deploy {
     profile=$name
   fi
 
-  echo "Starting new server"
-  id=`scw run -d \
-    --name="$name" \
-    --gateway="edge" \
-    --bootscript="4.1.6-docker #251" \
-    user/minion`
+  # check if server with this name already exists
+  check=$(scw ps -f name=${name} -q)
+  if [ "$check" == "" ]; then # does not exist
+    echo "Starting new server"
+    id=`scw run -d \
+      --name="$name" \
+      --gateway="edge" \
+      --bootscript="4.1.6-docker #251" \
+      user/minion`
 
-  echo "Configure server"
-  scw _patch ${id} tags="minion"
-  scw exec --wait --gateway=edge ${id} \
-  	"echo ${name} > /etc/hostname"
-
+    echo "Configure server"
+    scw _patch ${id} tags="minion"
+    scw exec --wait --gateway=edge ${id} \
+  	  "echo ${name} > /etc/hostname"
+  else # already exists
+    echo -n "Server already exists. Redeploy? (y/n) "
+    read yn
+    if [ "$yn" != "y" ]; then
+      exit 0
+    fi 
+  fi
   run _ ${id} ${profile}
 }
 
