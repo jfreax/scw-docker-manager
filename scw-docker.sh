@@ -4,7 +4,7 @@
 # List all running docker container of all running servers
 ##
 function ps {
-  if [ $2 = '-a' ]; then
+  if [ -z $2 ] && [ $2 = '-a' ]; then
     show_all=true
   else
     show_all=false
@@ -48,6 +48,10 @@ function start {
 function run {
   id=$2
   profile=$3
+
+  if [ -z $profile ]; then
+    profile=$name
+  fi
 
   echo "Update repo infos"
   scw exec --gateway=edge ${id} \
