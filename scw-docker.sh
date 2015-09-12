@@ -22,6 +22,11 @@ function ps {
   exit 0
 }
 
+function ip {
+  id="server:$2"
+  scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g'
+}
+
 ##
 # Starts a new server
 ##
@@ -249,7 +254,7 @@ EOF
 ) > /tmp/scw-docker.$name.nginx.tmp
       #scw cp /tmp/scw-docker.$name.nginx.tmp edge:/etc/nginx/sites-available/${name}_${ip}
       scp /tmp/scw-docker.$name.nginx.tmp root@212.47.244.17:/etc/nginx/sites-available/${name}_${ip}
-      scw exec server:edge "ln -sf /etc/nginx/sites-available/${name}_${ip} /etc/nginx/sites-enabled/"
+      scw exec server:edge "ln -sf /etc/nginx/sites-available/${name}.conf /etc/nginx/sites-enabled/"
       scw exec server:edge "/etc/init.d/nginx reload"
       ;;
     *)
@@ -261,6 +266,9 @@ EOF
 case $1 in
   ps)
     ps $@
+    ;;
+  ip)
+    ip $@
     ;;
   deploy)
     deploy $@
