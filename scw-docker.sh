@@ -99,7 +99,6 @@ function deploy {
   check=$(scw ps -f name=${name} -q)
   if [ "$check" == "" ]; then # does not exist
     echo "Starting new server"
-    echo -n "ID: "
     id=`scw run -d \
       --name="$name" \
       --gateway="edge" \
@@ -107,6 +106,7 @@ function deploy {
       user/minion`
 
     echo "Configure server"
+    echo -n "ID: "
     scw _patch ${id} tags="minion profile=${profile}"
 
     # set hostname
@@ -115,7 +115,10 @@ function deploy {
   	# we have to reboot to actually load the hostname
   	echo "Rebooting..."
   	scw exec --gateway=edge ${id} "reboot"
-  	scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a"
+  	scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a" 2> /dev/null
+  	while [ $? -ne 0 ]; do # hack, because wait does not work on reboot
+  		scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a" 2> /dev/null
+  	done
 
   else # already exists
     echo -n "Server already exists. Redeploy? (y/n) "
