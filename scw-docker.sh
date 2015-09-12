@@ -49,8 +49,13 @@ function run {
   id=$2
   profile=$3
 
+  if [ -z $id ]; then
+    echo "Missing arguments"
+    exit 2
+  fi
+
   if [ -z $profile ]; then
-    profile=$name
+    profile=$id
   fi
 
   echo "Update repo infos"
@@ -66,7 +71,10 @@ function run {
        ./prepare.sh; \
      fi; \
      docker-compose up -d; \
-     echo \"${profile}\" > ~/.scw-docker.deploy"
+     echo \"${profile}\" > ~/.scw-docker.deploy \
+     if [ -f ./post.sh ]; then \
+       ./post.sh; \
+     fi; "
 }
 
 ##
@@ -80,6 +88,7 @@ function deploy {
 
   if [ -z $name ]; then
     echo "Missing arguments"
+    exit 2
   fi
 
   if [ -z $profile ]; then
@@ -215,6 +224,8 @@ function rproxy {
       port=$4
       fqdns=$5
       ssl=$6
+      subfolder=$7
+
       if [ -z $name ] || [ -z $port ] || [ -z $fqdns ]; then
       	echo "Missing arguments"
       	exit 2
@@ -224,7 +235,7 @@ function rproxy {
       protocol="http"
       if [ "$ssl" = "true" ]; then
       	protocol="https"
-      fi
+      fi     
 
       ip=$(scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g')
 
@@ -264,7 +275,7 @@ server {
         proxy_set_header        Host \$http_host;
         add_header              Front-End-Https   on;
 
-        proxy_pass ${protocol}://${ip}:${port};
+        proxy_pass ${protocol}://${ip}:${port}/${subfolder};
     }
 }
 EOF
