@@ -41,6 +41,31 @@ function start {
 }
 
 ##
+# Deploys a docker profile
+#
+# Arguments: <server-name or id> <deployment-profile>
+##
+function run {
+  id=$2
+  profile=$3
+
+  echo "Update repo infos"
+  scw exec --gateway=edge ${id} \
+    "cd ~/docker; git pull"
+  scw exec --gateway=edge ${id} \
+    "scp binpkguser@aafeac30-7cb2-4b13-9991-c63ce4bcbc10.priv.cloud.scaleway.com:/etc/portage/package.accept_keywords /etc/portage/package.accept_keywords"
+
+  echo "Starting container"
+  scw exec --gateway=edge ${id} \
+    "cd ~/docker/${profile}/; \
+     if [ -f ./prepare.sh ]; then \
+       ./prepare.sh; \
+     fi; \
+     docker-compose up -d; \
+     echo \"${profile}\" > ~/.scw-docker.deploy"
+}
+
+##
 # Starts a new server and deploys a docker profile
 #
 # Arguments: <server-name> <deployment-profile>
@@ -68,20 +93,8 @@ function deploy {
   scw _patch ${id} tags="minion"
   scw exec --wait --gateway=edge ${id} \
   	"echo ${name} > /etc/hostname"
-  scw exec --gateway=edge ${id} \
-    "cd ~/docker; git pull"
-  scw exec --gateway=edge ${id} \
-    "scp binpkguser@aafeac30-7cb2-4b13-9991-c63ce4bcbc10.priv.cloud.scaleway.com:/etc/portage/package.accept_keywords /etc/portage/package.accept_keywords"
 
-  echo "Starting container"
-  scw exec --gateway=edge ${id} \
-    "cd ~/docker/${profile}/; \
-     if [ -f ./prepare.sh ]; then \
-       ./prepare.sh; \
-     fi; \
-     docker-compose up -d; \
-     echo \"${profile}\" > ~/.scw-docker.deploy"
-  exit $?
+  run _ ${id} ${profile}
 }
 
 ##
@@ -269,6 +282,9 @@ case $1 in
     ;;
   ip)
     ip $@
+    ;;
+  run)
+    run $@
     ;;
   deploy)
     deploy $@
