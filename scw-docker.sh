@@ -99,6 +99,7 @@ function deploy {
   check=$(scw ps -f name=${name} -q)
   if [ "$check" == "" ]; then # does not exist
     echo "Starting new server"
+    echo -n "ID: "
     id=`scw run -d \
       --name="$name" \
       --gateway="edge" \
@@ -112,7 +113,8 @@ function deploy {
     scw exec --wait --gateway=edge ${id} \
   	  "echo ${name} > /etc/hostname"
   	# we have to reboot to actually load the hostname
-  	scw exec --wait --gateway=edge ${id} "reboot"
+  	echo "Rebooting..."
+  	scw exec --gateway=edge ${id} "reboot"
   	scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a"
 
   else # already exists
