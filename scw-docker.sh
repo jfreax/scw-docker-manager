@@ -23,6 +23,19 @@ function ps {
 }
 
 ##
+# Starts a new server
+##
+function start {
+  name=$2
+
+  scw run -d \
+    --name="$name" \
+    --gateway="edge" \
+    --bootscript="4.1.6-docker #251" \
+    user/minion
+}
+
+##
 # Starts a new server and deploys a docker profile
 #
 # Arguments: <server-name> <deployment-profile>
@@ -51,9 +64,9 @@ function deploy {
   scw exec --wait --gateway=edge ${id} \
   	"echo ${name} > /etc/hostname"
   scw exec --gateway=edge ${id} \
-    "cd ~/docker; git pull" 
-  scw cp --gateway=edge \
-    server:repository:/etc/portage/package.accept_keywords ${id}:/etc/portage/package.accept_keywords
+    "cd ~/docker; git pull"
+  scw exec --gateway=edge ${id} \
+    "scp binpkguser@aafeac30-7cb2-4b13-9991-c63ce4bcbc10.priv.cloud.scaleway.com:/etc/portage/package.accept_keywords /etc/portage/package.accept_keywords"
 
   echo "Starting container"
   scw exec --gateway=edge ${id} \
