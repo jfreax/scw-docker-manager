@@ -2,17 +2,17 @@
 
 function ps {
   if [ $2 = '-a' ]; then
-  	show_all=true
+    show_all=true
   else
-  	show_all=false
+    show_all=false
   fi
 
   ids=`scw ps -q`
   for id in $ids; do
-  	scw inspect $id | jq ".[0].name"
-  	if [ $show_all = true ]; then
+    scw inspect $id | jq ".[0].name"
+    if [ $show_all = true ]; then
       scw exec --gateway="edge" $id docker ps -a
-  	else
+    else
       scw exec --gateway="edge" $id docker ps
     fi
   done
@@ -24,11 +24,11 @@ function deploy {
   image=$3
 
   if [ -z $name ]; then
-  	echo "Missing arguments"
+    echo "Missing arguments"
   fi
 
   if [ -z $image ]; then
-  	image=$name
+    image=$name
   fi
 
   echo "Starting new server"
@@ -70,7 +70,7 @@ function install {
   name=$2
   package=$3
   if [ -z $name ] || [ -z $package]; then
-  	echo "Missing arguments"
+    echo "Missing arguments"
   fi
 
   # Check if binary package is available
@@ -82,7 +82,7 @@ function install {
 }
 
 function update {
-  pid=$(scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 pgrep emerge 2> /dev/null")
+  pid=$(scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 pgrep emerge")
   if [ ! -z "$pid" ]; then
   	echo "Update already in progress..."
   	scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 genlop -c"
@@ -94,6 +94,12 @@ function update {
       "echo -------- $(date) -------- >> /var/log/emerge-update.log"
     scw exec --gateway=edge repository \
       "docker exec -d gentoobuild_genoo-build_1 emerge -uDN --with-bdeps=y --keep-going world >> /var/log/emerge-update.log"
+
+    ids=`scw ps -q`
+    for id in $ids; do
+      echo "Starting update on $(scw inspect $id | jq ".[0].name")"
+      scw exec --gateway=edge $id "eix-sync; emerge -uDN --with-bdeps=y --keep-going world" & > /dev/null 2> /dev/null
+    done
   fi
 }
 
@@ -107,8 +113,8 @@ case $1 in
     ps $@
     ;;
   deploy)
-	deploy $@
-	;;
+    deploy $@
+    ;;
   images)
     images $@
     ;;
