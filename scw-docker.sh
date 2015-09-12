@@ -1,10 +1,10 @@
 #!/bin/bash
 
 function ps {
-  if [ -z $2 ]; then
-  	show_all=false
-  else
+  if [ $2 = '-a' ]; then
   	show_all=true
+  else
+  	show_all=false
   fi
 
   ids=`scw ps -q`
@@ -41,7 +41,7 @@ function deploy {
   echo "Configure server"
   scw _patch ${id} tags="minion"
   scw exec --wait --gateway=edge ${id} \
-  	"echo ${id} > /etc/hostname"
+  	"echo ${name} > /etc/hostname"
   scw exec --gateway=edge ${id} \
     "cd ~/docker; git pull"
 
@@ -81,6 +81,27 @@ function install {
     "emerge $package"
 }
 
+function update {
+  pid=$(scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 pgrep emerge 2> /dev/null")
+  if [ ! -z "$pid" ]; then
+  	echo "Update already in progress..."
+  	scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 genlop -c"
+  else
+  	echo "Start emerging..."
+    scw exec --gateway=edge repository \
+      "docker exec gentoobuild_genoo-build_1 bash -c \"source ~/.bashrc; eix-sync\""
+    scw exec --gateway=edge repository \
+      "echo -------- $(date) -------- >> /var/log/emerge-update.log"
+    scw exec --gateway=edge repository \
+      "docker exec -d gentoobuild_genoo-build_1 emerge -uDN --with-bdeps=y --keep-going world >> /var/log/emerge-update.log"
+  fi
+}
+
+function ssh {
+  name=$2
+  scw exec --gateway=edge $name /bin/bash
+}
+
 case $1 in
   ps)
     ps $@
@@ -96,6 +117,12 @@ case $1 in
     ;;
   install)
     install $@
+    ;;
+  update)
+    update $@
+    ;;
+  ssh)
+    ssh $@
     ;;
   *)
     echo "Unknown command"
