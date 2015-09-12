@@ -113,7 +113,7 @@ function deploy {
   	  "echo ${name} > /etc/hostname"
   	# we have to reboot to actually load the hostname
   	scw exec --wait --gateway=edge ${id} "reboot"
-  	scw exec --wait --gateway=edge ${id} "echo "\"Server up and running\"; uname -a"
+  	scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a"
 
   else # already exists
     echo -n "Server already exists. Redeploy? (y/n) "
