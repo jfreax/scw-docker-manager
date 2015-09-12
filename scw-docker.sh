@@ -106,7 +106,7 @@ function deploy {
       user/minion`
 
     echo "Configure server"
-    scw _patch ${id} tags="minion"
+    scw _patch ${id} tags="minion profile=${profile}"
 
     # set hostname
     scw exec --wait --gateway=edge ${id} \
