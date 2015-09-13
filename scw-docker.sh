@@ -250,30 +250,95 @@ function ssh {
 ##
 # Manage remote proxy configuration
 ##
+function rproxy_usage { 
+  echo "$0 rproxy [add|del|activate|deactivate] [options]"
+  echo -e "\nOptions:"
+  echo -e "\t-n\tname or ID of server"
+  echo -e "\t-p\tlistening port"
+  echo -e "\t-d\tfully qualified domain name (FQDN),"
+  echo -e "\t-f\tsubfolder for remote connection (optional)"
+  echo -e "\t-s\tuse if remote connection uses ssl"
+  echo -e "\t-i\tuse plain http"
+}
 function rproxy {
-  case $2 in
+  case $1 in
     add)
-      name=$3
-      id="server:$name"
-      port=$4
-      fqdns=$5
-      ssl=$6
-      subfolder=$7
+      shift
+      while getopts "n:p:d:sf:i" o; do
+        case "${o}" in
+          n)
+            name=${OPTARG}
+            ;;
+          p)
+            port=${OPTARG}
+            ;;
+          d)
+            fqdn=${OPTARG}
+            ;;
+          s)
+            ssl=true
+            ;;
+          i)
+            insecure=true
+            ;;
+          f)
+            subfolder=${OPTARG}
+            ;;
+          *)
+            exit 1
+            echo -n "Usage: "
+            rproxy_usage
+            ;;
+        esac
+      done
+      shift $((OPTIND-1))
 
-      if [ -z $name ] || [ -z $port ] || [ -z $fqdns ]; then
+      id="server:$name"
+
+      if [ -z $name ] || [ -z $port ] || [ -z $fqdn ]; then
         echo "Missing arguments"
+        echo -n "Usage: "
+        rproxy_usage
         exit 2
       fi
-      fqdn=$(echo $5 | sed 's/,/ /g')
+      fqdn=$(echo $fqdn | sed 's/,/ /g')
 
       protocol="http"
       if [ "$ssl" = "true" ]; then
         protocol="https"
-      fi     
+      fi
 
+      echo "$name $fqdn $protocol $subfolder $port $insecure"
+      exit
+
+      # get private ip
       ip=$(scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g')
 
-      (cat <<EOF
+      if [ $insecure == true ]; then
+        (cat <<EOF
+server {
+    listen 80;
+    server_name ${fqdn};
+
+    access_log /var/log/nginx/${name}.log;
+    error_log /var/log/nginx/${name}.error.log;
+
+    location / {
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header Host   \$http_host;
+        proxy_read_timeout      300;
+        proxy_set_header        X-Forwarded-Proto https;
+        proxy_set_header        Host \$http_host;
+        add_header              Front-End-Https   on;
+
+        proxy_pass ${protocol}://${ip}:${port}/${subfolder};
+    }
+}
+EOF
+) > /tmp/scw-docker.$name.nginx.tmp
+      else
+        (cat <<EOF
 server {
    access_log /var/log/nginx/${name}.log;
    error_log /var/log/nginx/${name}.error.log;
@@ -314,13 +379,15 @@ server {
 }
 EOF
 ) > /tmp/scw-docker.$name.nginx.tmp
+      fi
       #scw cp /tmp/scw-docker.$name.nginx.tmp edge:/etc/nginx/sites-available/${name}_${ip}
       scp /tmp/scw-docker.$name.nginx.tmp root@212.47.244.17:/etc/nginx/sites-available/${name}-${port}.conf
       scw exec server:edge "ln -sf /etc/nginx/sites-available/${name}-${port}.conf /etc/nginx/sites-enabled/"
       scw exec server:edge "/etc/init.d/nginx reload"
       ;;
     *)
-      echo "Unknown sub command"
+      echo -n "Usage: "
+      rproxy_usage
       exit 1
   esac
 }
@@ -360,10 +427,11 @@ case $1 in
     ssh $@
     ;;
   rproxy)
+    shift
     rproxy $@
     ;;
   *)
-    echo "Unknown command"
+    echo "Usage:"
+    rproxy_usage
     exit 1
 esac
-
