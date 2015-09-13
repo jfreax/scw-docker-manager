@@ -81,7 +81,7 @@ function run {
   tags=${tags:1:${#tags}-2}
   count=$(echo $tags | grep -c "profile=${profile}")
   if [ $count -eq 0 ]; then
-    scw _patch ${id} tags="${tags},minion profile=${profile}"
+    scw _patch server:${id} tags="${tags} minion profile=${profile}"
   fi
 }
 
