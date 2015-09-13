@@ -341,9 +341,6 @@ function rproxy {
         protocol="https"
       fi
 
-      echo "$name $fqdn $protocol $subfolder $port $insecure"
-      exit
-
       # get private ip
       ip=$(scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g')
 
