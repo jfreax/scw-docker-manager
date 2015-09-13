@@ -251,14 +251,15 @@ function ssh {
 # Manage remote proxy configuration
 ##
 function rproxy_usage { 
-  echo "$0 rproxy [add|del|activate|deactivate] [options]"
-  echo -e "\nOptions:"
-  echo -e "\t-n\tname or ID of server"
-  echo -e "\t-p\tlistening port"
-  echo -e "\t-d\tfully qualified domain name (FQDN),"
-  echo -e "\t-f\tsubfolder for remote connection (optional)"
-  echo -e "\t-s\tuse if remote connection uses ssl"
-  echo -e "\t-i\tuse plain http"
+  echo -e "$0 rproxy [add|del|activate|deactivate] [options]"
+  echo -e "  Mandatory arguments"
+  echo -e "    -n\tname or ID of server"
+  echo -e "    -p\tlistening port"
+  echo -e "    -d\tfully qualified domain name (FQDN),"
+  echo -e "  Optional arguments"
+  echo -e "    -f\tsubfolder for remote connection"
+  echo -e "    -s\tuse if remote connection uses ssl"
+  echo -e "    -i\tuse plain http"
 }
 function rproxy {
   case $1 in
