@@ -93,9 +93,9 @@ function run {
   echo "Update metadata"
   tags=$(scw inspect server:${id} | jq -c ".[0].tags" | sed 's/"//g' | sed 's/,/ /g')
   tags=${tags:1:${#tags}-2}
-  count=$(echo $tags | grep -c "profile=${profile}")
+  count=$(echo $tags | grep -c "profile:${profile}")
   if [ $count -eq 0 ]; then
-    scw _patch server:${id} tags="${tags} profile=${profile}"
+    scw _patch server:${id} tags="${tags} profile:${profile}"
   fi
 }
 
