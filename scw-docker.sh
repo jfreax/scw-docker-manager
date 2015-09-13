@@ -1,8 +1,12 @@
 #!/bin/bash
 
-##
-# List all running docker container of all running servers
-##
+ps_help="List all running docker container of all running servers"
+function ps_usage {
+  echo -e "$0 ps [OPTIONS]"
+  #echo -e "## List all running docker container of all running servers"
+  echo -e "  Optional arguments"
+  echo -e "    -a\t\tshow also inactive docker containers"
+}
 function ps {
   if [ -z $2 ] && [ $2 = '-a' ]; then
     show_all=true
@@ -22,14 +26,23 @@ function ps {
   exit 0
 }
 
+##############
+
+ip_help="List private ip of a server instance"
+function ip_usage {
+  echo -e "$0 ip SERVER"
+}
 function ip {
   id="server:$2"
   scw inspect sever:${id} | jq ".[0].private_ip" | sed 's/"//g'
 }
 
-##
-# Starts a new server
-##
+##############
+
+start_help="Starts a new server"
+function start_usage {
+  echo -e "$0 start SERVER"
+}
 function start {
   name=$2
 
@@ -40,11 +53,12 @@ function start {
     user/minion
 }
 
-##
-# Deploys a docker profile
-#
-# Arguments: <server-name or id> <deployment-profile>
-##
+##############
+
+run_help="Deploys a docker profile"
+function run_usage {
+  echo -e "$0 run SERVER PROFILE"
+}
 function run {
   id=$2
   profile=$3
@@ -85,11 +99,14 @@ function run {
   fi
 }
 
-##
-# Starts a new server and deploys a docker profile
-#
-# Arguments: <server-name> <deployment-profile>
-##
+##############
+
+deploy_help="Starts a new server and deploys a docker profile"
+function deploy_usage { 
+  echo -e "$0 deploy SERVER PROFILE [OPTIONS]"
+  echo -e "  Optional arguments"
+  echo -e "    -m\t\tUse mini image"
+}
 function deploy {
   name=$2
   profile=$3
@@ -144,39 +161,47 @@ function deploy {
   run _ ${id} ${profile}
 }
 
-##
-# Show logs of profile on a given server
-#
-# Arguments: <server name or id>
-##
+##############
+
+logs_help="Show logs of profile on a given server"
+function logs_usage {
+  echo -e "$0 logs SERVER"
+}
 function logs {
   id="server:$2"
   scw exec --gateway=edge ${id} \
     'if [ -f ~/.scw-docker.deploy ]; then cd ~/docker/$(cat ~/.scw-docker.deploy)/ && docker-compose logs; fi'
 }
 
-##
-# List all available private images
-##
+##############
+
+images_help="List all available private images"
+function images_usage {
+  echo -e "$0 images"
+}
 function images {
   scw exec --gateway=edge repository "curl http://hub.jdsoft.de/v1/search" | jq '.results'
   exit $?
 }
 
-##
-# List all available docker profiles
-##
+##############
+
+profiles_help="List all available docker profiles"
+function profiles_usage {
+  echo -e "$0 profiles"
+}
 function profiles {
   scw exec --gateway=edge repository \
     "su - jens -c \"cd /home/jens/docker/; git pull > /dev/null 2> /dev/null \"; cd /home/jens/docker/; ls"
   exit 0
 }
 
-##
-# Installs a new system package on a started server
-#
-# Arguments: <server-name or id> <package name>
-## 
+##############
+
+install_help="Installs a new system package on a started server"
+function install_usage {
+  echo -e "$0 install SERVER PACKAGE"
+}
 function install {
   id="server:$2"
   package=$3
@@ -196,9 +221,12 @@ function install {
   fi
 }
 
-##
-#
-##
+##############
+
+accept_keyword_help="Accept portage ~arm keyword for a given package"
+function accept_keyword_usage {
+  echo -e "$0 accept_keyword PACKAGE"
+}
 function accept_keyword {
   package=$2
 
@@ -212,9 +240,12 @@ function accept_keyword {
     "echo ${package} ~arm >> /srv/gentoo-build/etc-portage/package.accept_keywords"
 }
 
-##
-# Updates the system on all servers
-##
+##############
+
+update_help="Updates the repository server and distributes the update to all minion servers"
+function update_usage {
+  echo -e "$0 update"
+}
 function update {
   pid=$(scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 pgrep emerge")
   if [ ! -z "$pid" ]; then
@@ -237,29 +268,30 @@ function update {
   fi
 }
 
-##
-# Start a ssh connection to a given server
-#
-# Arguments: <server name or id>
-##
+##############
+
+ssh_help="Login to a given server via ssh"
+function ssh_usage {
+  echo -e "$0 ssh SERVER"
+}
 function ssh {
   name="server:$2"
   scw exec --gateway=edge $name /bin/bash
 }
 
-##
-# Manage remote proxy configuration
-##
+##############
+
+rproxy_help="Manage remote proxy configuration"
 function rproxy_usage { 
-  echo -e "$0 rproxy [add|del|activate|deactivate] [options]"
+  echo -e "$0 rproxy [add|del|activate|deactivate] [OPTIONS]"
   echo -e "  Mandatory arguments"
-  echo -e "    -n\tname or ID of server"
-  echo -e "    -p\tlistening port"
-  echo -e "    -d\tfully qualified domain name (FQDN),"
+  echo -e "    -n NAME\tname or ID of server"
+  echo -e "    -p PORT\tlistening port"
+  echo -e "    -d FQDN\tfully qualified domain name"
   echo -e "  Optional arguments"
-  echo -e "    -f\tsubfolder for remote connection"
-  echo -e "    -s\tuse if remote connection uses ssl"
-  echo -e "    -i\tuse plain http"
+  echo -e "    -f FOLDER\tsubfolder for remote connection"
+  echo -e "    -s\t\tuse if remote connection uses ssl"
+  echo -e "    -i\t\tuse plain http"
 }
 function rproxy {
   case $1 in
@@ -393,6 +425,46 @@ EOF
   esac
 }
 
+##############
+
+function usage {
+  echo -e "## $ps_help"
+  ps_usage
+
+  echo -e "\n## $ip_help"
+  ip_usage
+
+  echo -e "\n## $run_help"
+  run_usage
+
+  echo -e "\n## $deploy_help"
+  deploy_usage
+
+  echo -e "\n## $logs_help"
+  logs_usage
+
+  echo -e "\n## $images_help"
+  images_usage
+
+  echo -e "\n## $profiles_help"
+  profiles_usage
+
+  echo -e "\n## $install_help"
+  install_usage
+
+  echo -e "\n## $accept_keyword_help"
+  accept_keyword_usage
+
+  echo -e "\n## $update_help"
+  update_usage
+
+  echo -e "\n## $ssh_help"
+  ssh_usage
+
+  echo -e "\n## $rproxy_help"
+  rproxy_usage
+}
+
 case $1 in
   ps)
     ps $@
@@ -432,7 +504,7 @@ case $1 in
     rproxy $@
     ;;
   *)
-    echo "Usage:"
-    rproxy_usage
+    #echo "Usage:"
+    usage
     exit 1
 esac
