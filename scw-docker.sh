@@ -81,7 +81,7 @@ function run {
   tags=${tags:1:${#tags}-2}
   count=$(echo $tags | grep -c "profile=${profile}")
   if [ $count -eq 0 ]; then
-    scw _patch server:${id} tags="${tags} minion profile=${profile}"
+    scw _patch server:${id} tags="${tags} profile=${profile}"
   fi
 }
 
@@ -106,7 +106,7 @@ function deploy {
 
   image="user/minion"
   if [ $mini = true ]; then
-  	image="user/mini-minion"
+    image="user/mini-minion"
   fi
 
   # check if server with this name already exists
@@ -121,18 +121,18 @@ function deploy {
 
     echo "Configure server"
     echo -n "ID: "
-    scw _patch ${id} tags="minion profile=${profile}"
+    scw _patch ${id} tags="minion"
 
     # set hostname
     scw exec --wait --gateway=edge ${id} \
-  	  "echo ${name} > /etc/hostname"
-  	# we have to reboot to actually load the hostname
-  	echo "Rebooting..."
-  	scw exec --gateway=edge ${id} "reboot"
-  	scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a" 2> /dev/null
-  	while [ $? -ne 0 ]; do # hack, because wait does not work on reboot
-  		scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a" 2> /dev/null
-  	done
+      "echo ${name} > /etc/hostname"
+    # we have to reboot to actually load the hostname
+    echo "Rebooting..."
+    scw exec --gateway=edge ${id} "reboot"
+    scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a" 2> /dev/null
+    while [ $? -ne 0 ]; do # hack, because wait does not work on reboot
+        scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a" 2> /dev/null
+    done
 
   else # already exists
     echo -n "Server already exists. Redeploy? (y/n) "
@@ -192,7 +192,7 @@ function install {
     scw exec --gateway=edge $id \
       "emerge $package"
   else
-  	echo "Error: Cannot install package."
+    echo "Error: Cannot install package."
   fi
 }
 
@@ -218,10 +218,10 @@ function accept_keyword {
 function update {
   pid=$(scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 pgrep emerge")
   if [ ! -z "$pid" ]; then
-  	echo "Update already in progress..."
-  	scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 genlop -c"
+    echo "Update already in progress..."
+    scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 genlop -c"
   else
-  	echo "Start emerging..."
+    echo "Start emerging..."
     scw exec --gateway=edge repository \
       "docker exec gentoobuild_genoo-build_1 bash -c \"source ~/.bashrc; eix-sync\""
     scw exec --gateway=edge repository \
@@ -261,14 +261,14 @@ function rproxy {
       subfolder=$7
 
       if [ -z $name ] || [ -z $port ] || [ -z $fqdns ]; then
-      	echo "Missing arguments"
-      	exit 2
+        echo "Missing arguments"
+        exit 2
       fi
       fqdn=$(echo $5 | sed 's/,/ /g')
 
       protocol="http"
       if [ "$ssl" = "true" ]; then
-      	protocol="https"
+        protocol="https"
       fi     
 
       ip=$(scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g')
