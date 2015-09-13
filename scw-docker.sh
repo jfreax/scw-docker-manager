@@ -122,7 +122,7 @@ function deploy {
   fi
 
   image="user/minion"
-  if [ $mini = true ]; then
+  if [ $mini = "-m" ]; then
     image="user/mini-minion"
   fi
 
