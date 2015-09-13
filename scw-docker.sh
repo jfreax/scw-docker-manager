@@ -12,8 +12,8 @@ function ps {
 
   ids=`scw ps -q`
   for id in $ids; do
-    scw inspect $id | jq ".[0].name"
-    if [ $show_all = true ]; then
+    scw inspect server:${id} | jq ".[0].name"
+    if [ ${show_all} = true ]; then
       scw exec --gateway="edge" $id docker ps -a
     else
       scw exec --gateway="edge" $id docker ps
@@ -24,7 +24,7 @@ function ps {
 
 function ip {
   id="server:$2"
-  scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g'
+  scw inspect sever:${id} | jq ".[0].private_ip" | sed 's/"//g'
 }
 
 ##
@@ -75,6 +75,14 @@ function run {
      if [ -f ./post.sh ]; then \
        ./post.sh; \
      fi; "
+
+  echo "Update metadata"
+  tags=$(scw inspect server:${id} | jq -c ".[0].tags" | sed 's/"//g' | sed 's/,/ /g')
+  tags=${tags:1:${#tags}-2}
+  count=$(echo $tags | grep -c "profile=${profile}")
+  if [ $count -eq 0 ]; then
+    scw _patch ${id} tags="${tags},minion profile=${profile}"
+  fi
 }
 
 ##
@@ -85,6 +93,7 @@ function run {
 function deploy {
   name=$2
   profile=$3
+  mini=${4:-false}
 
   if [ -z $name ]; then
     echo "Missing arguments"
@@ -95,6 +104,11 @@ function deploy {
     profile=$name
   fi
 
+  image="user/minion"
+  if [ $mini = true ]; then
+  	image="user/mini-minion"
+  fi
+
   # check if server with this name already exists
   check=$(scw ps -f name=${name} -q)
   if [ "$check" == "" ]; then # does not exist
@@ -103,7 +117,7 @@ function deploy {
       --name="$name" \
       --gateway="edge" \
       --bootscript="4.1.6-docker #251" \
-      user/minion`
+      ${image}`
 
     echo "Configure server"
     echo -n "ID: "
@@ -217,7 +231,7 @@ function update {
 
     ids=`scw ps -q`
     for id in $ids; do
-      echo "Starting update on $(scw inspect $id | jq ".[0].name") (~/.scw-docker/emerge-update.$id.log)"
+      echo "Starting update on $(scw inspect server:$id | jq ".[0].name") (~/.scw-docker/emerge-update.$id.log)"
       nohup scw exec --gateway=edge $id "eix-sync; emerge -uDN --with-bdeps=y --keep-going world" & >> ~/.scw-docker/emerge-update.$id.log
     done
   fi
@@ -257,7 +271,7 @@ function rproxy {
       	protocol="https"
       fi     
 
-      ip=$(scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g')
+      ip=$(scw inspect server:${id} | jq ".[0].private_ip" | sed 's/"//g')
 
       (cat <<EOF
 server {
@@ -301,8 +315,8 @@ server {
 EOF
 ) > /tmp/scw-docker.$name.nginx.tmp
       #scw cp /tmp/scw-docker.$name.nginx.tmp edge:/etc/nginx/sites-available/${name}_${ip}
-      scp /tmp/scw-docker.$name.nginx.tmp root@212.47.244.17:/etc/nginx/sites-available/${name}.conf
-      scw exec server:edge "ln -sf /etc/nginx/sites-available/${name}.conf /etc/nginx/sites-enabled/"
+      scp /tmp/scw-docker.$name.nginx.tmp root@212.47.244.17:/etc/nginx/sites-available/${name}-${port}.conf
+      scw exec server:edge "ln -sf /etc/nginx/sites-available/${name}-${port}.conf /etc/nginx/sites-enabled/"
       scw exec server:edge "/etc/init.d/nginx reload"
       ;;
     *)
