@@ -271,7 +271,7 @@ function rproxy {
       	protocol="https"
       fi     
 
-      ip=$(scw inspect server:${id} | jq ".[0].private_ip" | sed 's/"//g')
+      ip=$(scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g')
 
       (cat <<EOF
 server {
