@@ -57,19 +57,44 @@ function start {
 
 run_help="Deploys a docker profile"
 function run_usage {
-  echo -e "$0 run SERVER PROFILE"
+  echo -e "$0 run SERVER PROFILE [OPTIONS]"
+  echo -e "  Optional arguments"
+  echo -e "    -p\t\tscript to start before startin container"
 }
 function run {
-  id=$2
-  profile=$3
+  id=$1
+  shift
+  profile=$1
 
-  if [ -z $id ]; then
+  if [ -z "${id}" ]; then
     echo "Missing arguments"
+    echo -n "Usage:"
+    run_usage
     exit 2
   fi
 
-  if [ -z $profile ]; then
-    profile=$id
+  if [ -z "${profile}" ]; then
+    profile=${id}
+  else
+    shift
+  fi
+
+  while getopts ":p:" o; do
+    case "${o}" in
+      p)
+        prepare=${OPTARG}
+        ;;
+      *)
+        echo -n "Usage: "
+        run_usage
+        exit 1
+        ;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  if [ ! -z "${prepare}" ]; then
+    ${prepare} ${id}
   fi
 
   echo "Update repo infos"
@@ -105,15 +130,19 @@ deploy_help="Starts a new server and deploys a docker profile"
 function deploy_usage { 
   echo -e "$0 deploy SERVER PROFILE [OPTIONS]"
   echo -e "  Optional arguments"
-  echo -e "    -m\t\tUse mini image"
+  echo -e "    -m\t\tuse mini image"
+  echo -e "    -p\t\tscript to start before startin container"
 }
 function deploy {
-  name=$2
-  profile=$3
-  mini=${4:-false}
+  name=$1
+  shift
+  profile=$1
+  shift
 
   if [ -z $name ]; then
     echo "Missing arguments"
+    echo -n "Usage: "
+    deploy_usage
     exit 2
   fi
 
@@ -121,8 +150,26 @@ function deploy {
     profile=$name
   fi
 
+  mini=false
+  while getopts "mp:" o; do
+    case "${o}" in
+      m)
+        mini=true
+        ;;
+      p)
+        prepare=${OPTARG}
+        ;;
+      *)
+        echo -n "Usage: "
+        deploy_usage
+        exit 1
+        ;;
+    esac
+  done
+  shift $((OPTIND-1))
+
   image="user/minion"
-  if [ $mini = "-m" ]; then
+  if [ $mini = true ]; then
     image="user/mini-minion"
   fi
 
@@ -158,7 +205,7 @@ function deploy {
       exit 0
     fi 
   fi
-  run _ ${id} ${profile}
+  run _ ${id} ${profile} -p ${prepare}
 }
 
 ##############
@@ -318,9 +365,9 @@ function rproxy {
             subfolder=${OPTARG}
             ;;
           *)
-            exit 1
             echo -n "Usage: "
             rproxy_usage
+            exit 1
             ;;
         esac
       done
@@ -473,6 +520,7 @@ case $1 in
     run $@
     ;;
   deploy)
+    shift
     deploy $@
     ;;
   logs)
