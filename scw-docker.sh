@@ -8,7 +8,7 @@ function ps_usage {
   echo -e "    -a\t\tshow also inactive docker containers"
 }
 function ps {
-  if [ -z $2 ] && [ $2 = '-a' ]; then
+  if [ -z "${2}" ] && [ $2 = '-a' ]; then
     show_all=true
   else
     show_all=false
@@ -34,7 +34,7 @@ function ip_usage {
 }
 function ip {
   id="server:$2"
-  scw inspect sever:${id} | jq ".[0].private_ip" | sed 's/"//g'
+  scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g'
 }
 
 ##############
