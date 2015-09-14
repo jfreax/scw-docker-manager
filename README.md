@@ -42,9 +42,9 @@ scw-docker profiles
 scw-docker install SERVER PACKAGE
 ```
 
-##### Accept portage ~arm keyword for a given package
+##### Accept portage keyword (default: ~arm) for a given package
 ```
-scw-docker accept_keyword PACKAGE
+scw-docker accept_keyword PACKAGE [KEYWORD]
 ```
 
 ##### Updates the repository server and distributes the update to all minion servers
