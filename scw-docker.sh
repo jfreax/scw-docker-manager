@@ -259,9 +259,13 @@ function install_usage {
 function install {
   server="server:$1"
   package=$2
+
   if [ -z "${server}" ] || [ -z "${package}" ]; then
     echo "Missing arguments"
+    install_usage
+    exit 1
   fi
+
 
   # Check if binary package is available
   scw exec --gateway=edge repository \
