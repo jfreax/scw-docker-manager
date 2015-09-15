@@ -306,8 +306,13 @@ function accept_keyword {
 
   ids=`scw ps -q`
   for id in $ids; do
-    scw exec --gateway=edge ${id} \
-      "echo ${package} ${keyword} >> /etc/portage/package.accept_keywords"
+    tags=$(scw inspect server:${id} | jq -c ".[0].tags" | sed 's/"//g' | sed 's/,/ /g')
+    tags=${tags:1:${#tags}-2}
+    count=$(echo $tags | grep -c "minion")
+    if [ $count -gt 0 ]; then
+      scw exec --gateway=edge ${id} \
+        "echo ${package} ${keyword} >> /etc/portage/package.accept_keywords"
+    fi
   done
 
   scw exec --gateway=edge server:repository \
