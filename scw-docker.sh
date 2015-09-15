@@ -273,8 +273,13 @@ function install {
       ids=`scw ps -q`
     fi
     for id in $ids; do
-      scw exec --gateway=edge ${id} \
-        "emerge $package"
+      tags=$(scw inspect server:${id} | jq -c ".[0].tags" | sed 's/"//g' | sed 's/,/ /g')
+      tags=${tags:1:${#tags}-2}
+      count=$(echo $tags | grep -c "minion")
+      if [ $count -gt 0 ]; then
+        scw exec --gateway=edge ${id} \
+          "emerge $package"
+      fi
     done
   else
     echo "Error: Cannot install package."
