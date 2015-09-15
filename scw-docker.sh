@@ -517,6 +517,7 @@ case $1 in
     ip $@
     ;;
   run)
+    shift
     run $@
     ;;
   deploy)
