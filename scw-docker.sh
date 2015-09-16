@@ -140,8 +140,10 @@ function deploy_usage {
 function deploy {
   name=$1
   shift
-  profile=$1
-  shift
+  if [[ $1 != -* ]]; then
+    profile=$1
+    shift
+  fi
 
   if [ -z $name ]; then
     echo "Missing arguments"
