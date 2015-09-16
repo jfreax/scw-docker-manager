@@ -253,8 +253,8 @@ function install_usage {
   echo -e "$0 install SERVER PACKAGE"
 }
 function install {
-  server="server:$2"
-  package=$3
+  server="server:$1"
+  package=$2
   if [ -z "${server}" ] || [ -z "${package}" ]; then
     echo "Missing arguments"
   fi
@@ -264,16 +264,14 @@ function install {
     "~/install_pkg.sh $package"
 
   if [ $? -eq 0 ]; then
+    ids="${server}"
     if [ "${server}" = "server:-a"]; then
       ids=`scw ps -q`
-      for id in $ids; do
-        scw exec --gateway=edge ${id} \
-          "emerge $package"
-      done
-    else
-      scw exec --gateway=edge ${server} \
-        "emerge $package"
     fi
+    for id in $ids; do
+      scw exec --gateway=edge ${id} \
+        "emerge $package"
+    done
   else
     echo "Error: Cannot install package."
   fi
@@ -561,6 +559,7 @@ case $1 in
     profiles $@
     ;;
   install)
+    shift
     install $@
     ;;
   accept_keyword)
