@@ -10,7 +10,7 @@ function ps_usage {
   echo -e "    -a\t\tshow also inactive docker containers"
 }
 function ps {
-  if [ -z $2 ] && [ $2 = '-a' ]; then
+  if [ -z "${2}" ] && [ $2 = '-a' ]; then
     show_all=true
   else
     show_all=false
@@ -36,7 +36,7 @@ function ip_usage {
 }
 function ip {
   id="server:$2"
-  scw inspect sever:${id} | jq ".[0].private_ip" | sed 's/"//g'
+  scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g'
 }
 
 ######## Start ########
@@ -283,19 +283,24 @@ function install {
 
 accept_keyword_help="Accept portage ~arm keyword for a given package"
 function accept_keyword_usage {
-  echo -e "$0 accept_keyword PACKAGE"
+  echo -e "$0 accept_keyword PACKAGE [KEYWORD]"
 }
 function accept_keyword {
   package=$2
+  keyword=$3
+
+  if [ -z "${keyword}" ]; then
+    keyword="~arm"
+  fi
 
   ids=`scw ps -q`
   for id in $ids; do
     scw exec --gateway=edge ${id} \
-      "echo ${package} ~arm >> /etc/portage/package.accept_keywords"
+      "echo ${package} ${keyword} >> /etc/portage/package.accept_keywords"
   done
 
   scw exec --gateway=edge server:repository \
-    "echo ${package} ~arm >> /srv/gentoo-build/etc-portage/package.accept_keywords"
+    "echo ${package} ${keyword} >> /srv/gentoo-build/etc-portage/package.accept_keywords"
 }
 
 ####### Update ########
