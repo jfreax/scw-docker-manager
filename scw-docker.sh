@@ -59,7 +59,7 @@ run_help="Deploys a docker profile"
 function run_usage {
   echo -e "$0 run SERVER PROFILE [OPTIONS]"
   echo -e "  Optional arguments"
-  echo -e "    -p\t\tscript to start before startin container"
+  echo -e "    -p\t\tscript to start before starting container"
 }
 function run {
   id=$1
@@ -253,9 +253,9 @@ function install_usage {
   echo -e "$0 install SERVER PACKAGE"
 }
 function install {
-  id="server:$2"
+  server="server:$2"
   package=$3
-  if [ -z $id ] || [ -z $package ]; then
+  if [ -z "${server}" ] || [ -z "${package}" ]; then
     echo "Missing arguments"
   fi
 
@@ -264,8 +264,16 @@ function install {
     "~/install_pkg.sh $package"
 
   if [ $? -eq 0 ]; then
-    scw exec --gateway=edge $id \
-      "emerge $package"
+    if [ "${server}" = "server:-a"]; then
+      ids=`scw ps -q`
+      for id in $ids; do
+        scw exec --gateway=edge ${id} \
+          "emerge $package"
+      done
+    else
+      scw exec --gateway=edge ${server} \
+        "emerge $package"
+    fi
   else
     echo "Error: Cannot install package."
   fi
