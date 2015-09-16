@@ -99,13 +99,13 @@ function run {
     ${prepare} ${id}
   fi
 
-  echo "Update repo infos"
+  echo ">>> Update repo infos"
   scw exec --gateway=edge ${id} \
     "cd ~/docker; git pull"
   scw exec --gateway=edge ${id} \
     "scp binpkguser@aafeac30-7cb2-4b13-9991-c63ce4bcbc10.priv.cloud.scaleway.com:/etc/portage/package.accept_keywords /etc/portage/package.accept_keywords"
 
-  echo "Starting container"
+  echo ">>> Starting container"
   scw exec --gateway=edge ${id} \
     "cd ~/docker/${profile}/; \
      if [ -f ./prepare.sh ]; then \
@@ -117,7 +117,7 @@ function run {
        ./post.sh; \
      fi; "
 
-  echo "Update metadata"
+  echo ">>> Update metadata"
   tags=$(scw inspect server:${id} | jq -c ".[0].tags" | sed 's/"//g' | sed 's/,/ /g')
   tags=${tags:1:${#tags}-2}
   count=$(echo $tags | grep -c "profile:${profile}")
@@ -185,7 +185,7 @@ function deploy {
       --bootscript="4.1.6-docker #251" \
       ${image}`
 
-    echo "Configure server"
+    echo ">>> Configure server"
     echo -n "ID: "
     scw _patch ${id} tags="minion"
 
@@ -193,11 +193,11 @@ function deploy {
     scw exec --wait --gateway=edge ${id} \
       "echo ${name} > /etc/hostname"
     # we have to reboot to actually load the hostname
-    echo "Rebooting..."
+    echo ">>> Rebooting..."
     scw exec --gateway=edge ${id} "reboot"
-    scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a" 2> /dev/null
+    scw exec --wait --gateway=edge ${id} "echo \">>> Server up and running\"; uname -a" 2> /dev/null
     while [ $? -ne 0 ]; do # hack, because wait does not work on reboot
-        scw exec --wait --gateway=edge ${id} "echo \"Server up and running\"; uname -a" 2> /dev/null
+        scw exec --wait --gateway=edge ${id} "echo \">>> Server up and running\"; uname -a" 2> /dev/null
     done
 
   else # already exists
