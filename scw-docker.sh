@@ -356,14 +356,14 @@ function rproxy_usage {
   echo -e "  Optional arguments"
   echo -e "    -n NAME\tservice name"
   echo -e "    -f FOLDER\tsubfolder for remote connection"
-  echo -e "    -s\t\tuse if remote connection uses ssl"
+  echo -e "    -t\t\tuse if remote connection uses ssl"
   echo -e "    -i\t\tuse plain http"
 }
 function rproxy {
   subcommand=$1
   shift
 
-  while getopts "s:p:d:sf:in:" o; do
+  while getopts "s:p:d:tf:in:" o; do
     case "${o}" in
       s)
         server=${OPTARG}
@@ -374,7 +374,7 @@ function rproxy {
       d)
         fqdn=${OPTARG}
         ;;
-      s)
+      t)
         ssl=true
         ;;
       i)
