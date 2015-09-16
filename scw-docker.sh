@@ -1,5 +1,7 @@
 #!/bin/bash
 
+######## ps ########
+
 ps_help="List all running docker container of all running servers"
 function ps_usage {
   echo -e "$0 ps [OPTIONS]"
@@ -26,7 +28,7 @@ function ps {
   exit 0
 }
 
-##############
+######## IP ########
 
 ip_help="List private ip of a server instance"
 function ip_usage {
@@ -37,7 +39,7 @@ function ip {
   scw inspect sever:${id} | jq ".[0].private_ip" | sed 's/"//g'
 }
 
-##############
+######## Start ########
 
 start_help="Starts a new server"
 function start_usage {
@@ -53,7 +55,7 @@ function start {
     user/minion
 }
 
-##############
+######## Run ########
 
 run_help="Deploys a docker profile"
 function run_usage {
@@ -126,7 +128,7 @@ function run {
   fi
 }
 
-##############
+######## Deploy ########
 
 deploy_help="Starts a new server and deploys a docker profile"
 function deploy_usage { 
@@ -211,7 +213,7 @@ function deploy {
   run ${name} ${profile} `if [ ! -z "${prepare}" ]; then echo "-p ${prepare}"; fi`
 }
 
-##############
+######## Logs ########
 
 logs_help="Show logs of profile on a given server"
 function logs_usage {
@@ -223,7 +225,7 @@ function logs {
     'if [ -f ~/.scw-docker.deploy ]; then cd ~/docker/$(cat ~/.scw-docker.deploy)/ && docker-compose logs; fi'
 }
 
-##############
+######## Images ########
 
 images_help="List all available private images"
 function images_usage {
@@ -234,7 +236,7 @@ function images {
   exit $?
 }
 
-##############
+######## Profiles ########
 
 profiles_help="List all available docker profiles"
 function profiles_usage {
@@ -246,7 +248,7 @@ function profiles {
   exit 0
 }
 
-##############
+######## Install ########
 
 install_help="Installs a new system package on a started server"
 function install_usage {
@@ -277,7 +279,7 @@ function install {
   fi
 }
 
-##############
+######## Accept keyword ########
 
 accept_keyword_help="Accept portage ~arm keyword for a given package"
 function accept_keyword_usage {
@@ -296,7 +298,7 @@ function accept_keyword {
     "echo ${package} ~arm >> /srv/gentoo-build/etc-portage/package.accept_keywords"
 }
 
-##############
+####### Update ########
 
 update_help="Updates the repository server and distributes the update to all minion servers"
 function update_usage {
@@ -324,7 +326,7 @@ function update {
   fi
 }
 
-##############
+######## SSH ########
 
 ssh_help="Login to a given server via ssh"
 function ssh_usage {
@@ -335,7 +337,7 @@ function ssh {
   scw exec --gateway=edge $name /bin/bash
 }
 
-##############
+######## Reverse proxy ########
 
 rproxy_help="Manage remote proxy configuration"
 function rproxy_usage { 
@@ -494,7 +496,7 @@ EOF
   scw exec server:edge "/etc/init.d/nginx reload"
 }
 
-##############
+######## MAIN ########
 
 function usage {
   echo -e "Usage: $0 <command> [arguments]\n"
