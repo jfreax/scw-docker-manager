@@ -93,6 +93,7 @@ function run {
   done
   shift $((OPTIND-1))
 
+  # Run local prepare script
   if [ ! -z "${prepare}" ]; then
     ${prepare} ${id}
   fi
