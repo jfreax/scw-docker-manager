@@ -73,13 +73,14 @@ function run {
     exit 2
   fi
 
-  if [ ! -z "${profile}" ]; then
+  if [ -z "${profile}" ]; then
     profile=${id}
   else
     shift
   fi
 
-  while getopts ":p:" o; do
+  echo $@
+  while getopts "p:" o; do
     case "${o}" in
       p)
         prepare=${OPTARG}
@@ -207,7 +208,7 @@ function deploy {
     fi 
   fi
 
-  run ${name} ${profile} -p ${prepare}
+  run ${name} ${profile} `if [ ! -z "${prepare}" ]; then echo "-p ${prepare}"; fi`
 }
 
 ##############
