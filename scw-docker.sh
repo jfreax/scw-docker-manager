@@ -391,7 +391,7 @@ function rproxy {
       # get private ip
       ip=$(scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g')
 
-      if [ $insecure == true ]; then
+      if [ "$insecure" = true ]; then
         (cat <<EOF
 server {
     listen 80;
