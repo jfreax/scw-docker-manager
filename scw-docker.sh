@@ -281,9 +281,9 @@ function install {
       tags=${tags:1:${#tags}-2}
       count=$(echo $tags | grep -c "minion")
       if [ $count -gt 0 ]; then
-        echo "Start installation on ${id}"
+        echo -e "\nStart installation on ${id}"
         scw exec --gateway=edge ${id} \
-          "emerge $package"
+          "emerge -uDN $package"
       fi
     done
   else
