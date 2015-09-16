@@ -319,6 +319,31 @@ function accept_keyword {
     "echo ${package} ${keyword} >> /srv/gentoo-build/etc-portage/package.accept_keywords"
 }
 
+######## Use flag ########
+
+use_flag_help="Manage use flag for portage packages"
+function use_flag_usage {
+  echo -e "$0 use_flag PACKAGE FLAG"
+}
+function use_flag {
+  package=$2
+  use_flag=$3
+
+  ids=`scw ps -q`
+  for id in $ids; do
+    tags=$(scw inspect server:${id} | jq -c ".[0].tags" | sed 's/"//g' | sed 's/,/ /g')
+    tags=${tags:1:${#tags}-2}
+    count=$(echo $tags | grep -c "minion")
+    if [ $count -gt 0 ]; then
+      scw exec --gateway=edge ${id} \
+        "echo ${package} ${use_flag} >> /etc/portage/package.use"
+    fi
+  done
+
+  scw exec --gateway=edge server:repository \
+    "echo ${package} ${use_flag} >> /srv/gentoo-build/etc-portage/package.use"
+}
+
 ####### Update ########
 
 update_help="Updates the repository server and distributes the update to all minion servers"
@@ -326,7 +351,7 @@ function update_usage {
   echo -e "$0 update"
 }
 function update {
-  pid=$(scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 pgrep emerge")
+  pid="$(scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 pgrep emerge || echo -n")"
   if [ ! -z "$pid" ]; then
     echo "Update already in progress..."
     scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 genlop -c"
@@ -531,6 +556,7 @@ function usage {
   echo -e "    profiles\t\t $profiles_help"
   echo -e "    install\t\t $install_help"
   echo -e "    accept_keyword\t $accept_keyword_help"
+  echo -e "    use_flag\t $use_flag_help"
   echo -e "    update\t\t $update_help"
   echo -e "    ssh\t\t\t $ssh_help"
   echo -e "    rproxy\t\t $rproxy_help"
@@ -566,6 +592,9 @@ case $1 in
     ;;
   accept_keyword)
     accept_keyword $@
+    ;;
+  use_flag)
+    use_flag $@
     ;;
   update)
     update $@
