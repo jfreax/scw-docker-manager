@@ -205,7 +205,7 @@ function deploy {
       exit 0
     fi 
   fi
-  run _ ${id} ${profile} -p ${prepare}
+  run ${id} ${profile} -p ${prepare}
 }
 
 ##############
