@@ -332,50 +332,60 @@ rproxy_help="Manage remote proxy configuration"
 function rproxy_usage { 
   echo -e "$0 rproxy [add|del|activate|deactivate] [OPTIONS]"
   echo -e "  Mandatory arguments"
-  echo -e "    -n NAME\tname or ID of server"
+  echo -e "    -s SERVER\tname or ID of server"
   echo -e "    -p PORT\tlistening port"
   echo -e "    -d FQDN\tfully qualified domain name"
   echo -e "  Optional arguments"
+  echo -e "    -n NAME\tservice name"
   echo -e "    -f FOLDER\tsubfolder for remote connection"
   echo -e "    -s\t\tuse if remote connection uses ssl"
   echo -e "    -i\t\tuse plain http"
 }
 function rproxy {
-  case $1 in
+  subcommand=$1
+  shift
+
+  while getopts "s:p:d:sf:in:" o; do
+    case "${o}" in
+      s)
+        server=${OPTARG}
+        ;;
+      p)
+        port=${OPTARG}
+        ;;
+      d)
+        fqdn=${OPTARG}
+        ;;
+      s)
+        ssl=true
+        ;;
+      i)
+        insecure=true
+        ;;
+      f)
+        subfolder=${OPTARG}
+        ;;
+      n)
+        name=${OPTARG}
+        ;;
+      *)
+        echo -n "Usage: "
+        rproxy_usage
+        exit 1
+        ;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  if [ -z "$name" ]; then
+    name=$port
+  fi
+
+  case $subcommand in
     add)
-      shift
-      while getopts "n:p:d:sf:i" o; do
-        case "${o}" in
-          n)
-            name=${OPTARG}
-            ;;
-          p)
-            port=${OPTARG}
-            ;;
-          d)
-            fqdn=${OPTARG}
-            ;;
-          s)
-            ssl=true
-            ;;
-          i)
-            insecure=true
-            ;;
-          f)
-            subfolder=${OPTARG}
-            ;;
-          *)
-            echo -n "Usage: "
-            rproxy_usage
-            exit 1
-            ;;
-        esac
-      done
-      shift $((OPTIND-1))
+      id="server:$server"
 
-      id="server:$name"
-
-      if [ -z $name ] || [ -z $port ] || [ -z $fqdn ]; then
+      if [ -z $server ] || [ -z $port ] || [ -z $fqdn ]; then
         echo "Missing arguments"
         echo -n "Usage: "
         rproxy_usage
@@ -397,8 +407,8 @@ server {
     listen 80;
     server_name ${fqdn};
 
-    access_log /var/log/nginx/${name}.log;
-    error_log /var/log/nginx/${name}.error.log;
+    access_log /var/log/nginx/${server}_${name}.log;
+    error_log /var/log/nginx/${server}_${name}.error.log;
 
     location / {
         proxy_set_header X-Real-IP \$remote_addr;
@@ -413,12 +423,12 @@ server {
     }
 }
 EOF
-) > /tmp/scw-docker.$name.nginx.tmp
+) > /tmp/scw-docker.${server}_${name}.nginx.tmp
       else
         (cat <<EOF
 server {
-   access_log /var/log/nginx/${name}.log;
-   error_log /var/log/nginx/${name}.error.log;
+   access_log /var/log/nginx/${server}_${name}.log;
+   error_log /var/log/nginx/${server}_${name}.error.log;
 
    listen 80;
    server_name ${fqdn};
@@ -439,8 +449,8 @@ server {
     # Add HSTS
     add_header Strict-Transport-Security "max-age=31536000; includeSubdomains";
 
-    access_log /var/log/nginx/${name}.log;
-    error_log /var/log/nginx/${name}.error.log;
+    access_log /var/log/nginx/${server}_${name}.log;
+    error_log /var/log/nginx/${server}_${name}.error.log;
 
     location / {
         proxy_set_header X-Real-IP \$remote_addr;
@@ -455,18 +465,24 @@ server {
     }
 }
 EOF
-) > /tmp/scw-docker.$name.nginx.tmp
+) > /tmp/scw-docker.${server}_${name}.nginx.tmp
       fi
-      #scw cp /tmp/scw-docker.$name.nginx.tmp edge:/etc/nginx/sites-available/${name}_${ip}
-      scp /tmp/scw-docker.$name.nginx.tmp root@212.47.244.17:/etc/nginx/sites-available/${name}-${port}.conf
-      scw exec server:edge "ln -sf /etc/nginx/sites-available/${name}-${port}.conf /etc/nginx/sites-enabled/"
-      scw exec server:edge "/etc/init.d/nginx reload"
+      scp /tmp/scw-docker.${server}_${name}.nginx.tmp root@212.47.244.17:/etc/nginx/sites-available/${server}_${name}.conf
+      scw exec server:edge "ln -sf /etc/nginx/sites-available/${server}_${name}.conf /etc/nginx/sites-enabled/"
+      ;;
+
+    del)
+      scw exec server:edge "rm /etc/nginx/sites-available/${server}_${name}.conf"
+      scw exec server:edge "rm /etc/nginx/sites-enabled/${server}_${name}.conf"
       ;;
     *)
       echo -n "Usage: "
       rproxy_usage
       exit 1
   esac
+
+  # Reload nginx config
+  scw exec server:edge "/etc/init.d/nginx reload"
 }
 
 ##############
