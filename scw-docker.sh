@@ -73,7 +73,7 @@ function run {
     exit 2
   fi
 
-  if [ -z "${profile}" ]; then
+  if [ ! -z "${profile}" ]; then
     profile=${id}
   else
     shift
@@ -205,7 +205,8 @@ function deploy {
       exit 0
     fi 
   fi
-  run ${id} ${profile} -p ${prepare}
+
+  run ${name} ${profile} -p ${prepare}
 }
 
 ##############
