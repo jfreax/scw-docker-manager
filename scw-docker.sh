@@ -497,41 +497,20 @@ EOF
 ##############
 
 function usage {
-  echo -e "## $ps_help"
-  ps_usage
-
-  echo -e "\n## $ip_help"
-  ip_usage
-
-  echo -e "\n## $run_help"
-  run_usage
-
-  echo -e "\n## $deploy_help"
-  deploy_usage
-
-  echo -e "\n## $logs_help"
-  logs_usage
-
-  echo -e "\n## $images_help"
-  images_usage
-
-  echo -e "\n## $profiles_help"
-  profiles_usage
-
-  echo -e "\n## $install_help"
-  install_usage
-
-  echo -e "\n## $accept_keyword_help"
-  accept_keyword_usage
-
-  echo -e "\n## $update_help"
-  update_usage
-
-  echo -e "\n## $ssh_help"
-  ssh_usage
-
-  echo -e "\n## $rproxy_help"
-  rproxy_usage
+  echo -e "Usage: $0 <command> [arguments]\n"
+  echo -e "The following commands are available:"
+  echo -e "    ps\t\t\t $ps_help"
+  echo -e "    ip\t\t\t $ip_help"
+  echo -e "    run\t\t\t $run_help"
+  echo -e "    deploy\t\t $deploy_help"
+  echo -e "    logs\t\t $logs_help"
+  echo -e "    images\t\t $images_help"
+  echo -e "    profiles\t\t $profiles_help"
+  echo -e "    install\t\t $install_help"
+  echo -e "    accept_keyword\t $accept_keyword_help"
+  echo -e "    update\t\t $update_help"
+  echo -e "    ssh\t\t\t $ssh_help"
+  echo -e "    rproxy\t\t $rproxy_help"
 }
 
 case $1 in
