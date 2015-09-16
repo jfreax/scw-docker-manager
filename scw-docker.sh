@@ -273,7 +273,7 @@ function install {
 
   if [ $? -eq 0 ]; then
     ids="${server}"
-    if [ "${server}" = "server:-a"]; then
+    if [ "${server}" = "server:-a" ]; then
       ids=`scw ps -q`
     fi
     for id in $ids; do
