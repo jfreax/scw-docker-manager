@@ -381,7 +381,7 @@ function update {
   else
     echo "Start emerging..."
     scw exec --gateway=edge repository \
-      "docker exec gentoobuild_genoo-build_1 bash -c \"source ~/.bashrc; eix-sync\""
+      "docker exec gentoobuild_genoo-build_1 bash -c \"source ~/.bashrc; emerge-websync; eix-update\""
     scw exec --gateway=edge repository \
       "echo -------- $(date) -------- >> /var/log/emerge-update.log"
     scw exec --gateway=edge repository \
