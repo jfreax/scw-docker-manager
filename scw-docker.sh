@@ -135,7 +135,7 @@ function deploy_usage {
   echo -e "$0 deploy SERVER PROFILE [OPTIONS]"
   echo -e "  Optional arguments"
   echo -e "    -m\t\tuse mini image"
-  echo -e "    -p\t\tscript to start before startin container"
+  echo -e "    -p\t\tscript to execute before starting container"
 }
 function deploy {
   name=$1
@@ -181,28 +181,51 @@ function deploy {
 
   # check if server with this name already exists
   check=$(scw ps -f name=${name} -q)
+  check=""
   if [ "$check" == "" ]; then # does not exist
-    echo "Starting new server"
+    echo ">>> Starting new server"
     id=`scw run -d \
       --name="$name" \
       --gateway="edge" \
-      --bootscript="4.1.6-docker #251" \
+      --bootscript="4.2-docker #253" \
       ${image}`
+
+    if [ $? -ne 0 ]; then
+      echo "Error creating new server"
+      exit 4
+    fi
 
     echo ">>> Configure server"
     echo -n "ID: "
     scw _patch ${id} tags="minion"
 
-    # set hostname
+    if [ $? -ne 0 ]; then
+      echo "Error creating new server"
+      exit 5
+    fi
+
+    # change ipa config files
     scw exec --wait --gateway=edge ${id} \
-      "echo ${name} > /etc/hostname"
+      "/root/deploy.sh ${name}"
+
     # we have to reboot to actually load the hostname
-    echo ">>> Rebooting..."
+    echo ">>> Issue reboot..."
     scw exec --gateway=edge ${id} "reboot"
+
+    # register new host on ipa
+    echo ">>> Register new IPA client"
+    ip=$(scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g')
+    scw exec --gateway=edge server:78e6b719-6cc4-4a08-9cc8-bb36f5bda824 "/root/add_host.sh ${name} ${ip}"
+
+    echo ">>> Wait for client reboot"
     scw exec --wait --gateway=edge ${id} "echo \">>> Server up and running\"; uname -a" 2> /dev/null
     while [ $? -ne 0 ]; do # hack, because wait does not work on reboot
         scw exec --wait --gateway=edge ${id} "echo \">>> Server up and running\"; uname -a" 2> /dev/null
     done
+
+    echo ">>> Starting sssd"
+    scw exec --gateway=edge ${id} "/etc/init.d/sssd start"
+    scw exec --gateway=edge ${id} "rc-update add sssd default"
 
   else # already exists
     echo -n "Server already exists. Redeploy? (y/n) "
