@@ -392,7 +392,7 @@ function update {
     ids=`scw ps -q`
     for id in $ids; do
       echo "Starting update on $(scw inspect server:$id | jq ".[0].name") (~/.scw-docker/emerge-update.$id.log)"
-      nohup scw exec --gateway=edge $id "eix-sync; emerge -uDN --with-bdeps=y --keep-going world" & >> ~/.scw-docker/emerge-update.$id.log
+      nohup scw exec --gateway=edge $id "eix-sync; emerge -uDN --with-bdeps=y --keep-going world" >> ~/.scw-docker/emerge-update.$id.log &
     done
   fi
 }
