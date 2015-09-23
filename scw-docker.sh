@@ -379,9 +379,11 @@ function update {
     echo "Update already in progress..."
     scw exec --gateway=edge hub "docker exec gentoobuild_genoo-build_1 genlop -c"
   else
-    echo "Start emerging..."
+    echo ">>> Update repository info..."
     scw exec --gateway=edge hub \
       "docker exec gentoobuild_genoo-build_1 bash -c \"source ~/.bashrc; emerge-webrsync; eix-update\""
+
+    echo ">>> Start emerging..."
     scw exec --gateway=edge hub \
       "echo -------- $(date) -------- >> /var/log/emerge-update.log"
     scw exec --gateway=edge hub \
