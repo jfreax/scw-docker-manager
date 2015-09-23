@@ -181,7 +181,6 @@ function deploy {
 
   # check if server with this name already exists
   check=$(scw ps -f name=${name} -q)
-  check=""
   if [ "$check" == "" ]; then # does not exist
     echo ">>> Starting new server"
     id=`scw run -d \
