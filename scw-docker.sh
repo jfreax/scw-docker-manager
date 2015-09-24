@@ -457,13 +457,13 @@ function rproxy {
   done
   shift $((OPTIND-1))
 
-  if [ -z "$name" ]; then
+  if [ -z "${name}" ]; then
     name=$port
   fi
 
   case $subcommand in
     add)
-      id="server:$server"
+      id="server:${server}"
 
       if [ -z $server ] || [ -z $port ] || [ -z $fqdn ]; then
         echo "Missing arguments"
@@ -471,17 +471,17 @@ function rproxy {
         rproxy_usage
         exit 2
       fi
-      fqdn=$(echo $fqdn | sed 's/,/ /g')
+      fqdn=$(echo ${fqdn} | sed 's/,/ /g')
 
       protocol="http"
-      if [ "$ssl" = "true" ]; then
+      if [ "${ssl}" = "true" ]; then
         protocol="https"
       fi
 
       # get private ip
       ip=$(scw inspect ${id} | jq ".[0].private_ip" | sed 's/"//g')
 
-      if [ "$insecure" = true ]; then
+      if [ "${insecure}" = true ]; then
         (cat <<EOF
 server {
     listen 80;
@@ -499,7 +499,7 @@ server {
         proxy_set_header        Host \$http_host;
         add_header              Front-End-Https   on;
 
-        proxy_pass ${protocol}://${ip}:${port}/${subfolder};
+        proxy_pass ${protocol}://${server}.jdsoft.de:${port}/${subfolder};
     }
 }
 EOF
@@ -541,7 +541,7 @@ server {
         proxy_set_header        Host \$http_host;
         add_header              Front-End-Https   on;
 
-        proxy_pass ${protocol}://${ip}:${port}/${subfolder};
+        proxy_pass ${protocol}://${server}.jdsoft.de:${port}/${subfolder};
     }
 }
 EOF
