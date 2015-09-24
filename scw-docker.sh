@@ -256,7 +256,7 @@ function images_usage {
   echo -e "$0 images"
 }
 function images {
-  scw exec --gateway=edge repository "curl http://hub.jdsoft.de/v1/search" | jq '.results'
+  scw exec --gateway=edge hub "curl http://hub.jdsoft.de/v1/search" | jq '.results'
   exit $?
 }
 
@@ -267,7 +267,7 @@ function profiles_usage {
   echo -e "$0 profiles"
 }
 function profiles {
-  scw exec --gateway=edge repository \
+  scw exec --gateway=edge hub \
     "su - jens -c \"cd /home/jens/docker/; git pull > /dev/null 2> /dev/null \"; cd /home/jens/docker/; ls"
   exit 0
 }
@@ -290,7 +290,7 @@ function install {
 
 
   # Check if binary package is available
-  scw exec --gateway=edge repository \
+  scw exec --gateway=edge hub \
     "~/install_pkg.sh $package"
 
   if [ $? -eq 0 ]; then
@@ -338,7 +338,7 @@ function accept_keyword {
     fi
   done
 
-  scw exec --gateway=edge server:repository \
+  scw exec --gateway=edge server:hub \
     "echo ${package} ${keyword} >> /srv/gentoo-build/etc-portage/package.accept_keywords"
 }
 
@@ -363,34 +363,36 @@ function use_flag {
     fi
   done
 
-  scw exec --gateway=edge server:repository \
+  scw exec --gateway=edge server:hub \
     "echo ${package} ${use_flag} >> /srv/gentoo-build/etc-portage/package.use"
 }
 
 ####### Update ########
 
-update_help="Updates the repository server and distributes the update to all minion servers"
+update_help="Updates the hub server and distributes the update to all minion servers"
 function update_usage {
   echo -e "$0 update"
 }
 function update {
-  pid="$(scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 pgrep emerge || echo -n")"
+  pid="$(scw exec --gateway=edge hub "docker exec gentoobuild_genoo-build_1 pgrep emerge || echo -n")"
   if [ ! -z "$pid" ]; then
     echo "Update already in progress..."
-    scw exec --gateway=edge repository "docker exec gentoobuild_genoo-build_1 genlop -c"
+    scw exec --gateway=edge hub "docker exec gentoobuild_genoo-build_1 genlop -c"
   else
-    echo "Start emerging..."
-    scw exec --gateway=edge repository \
-      "docker exec gentoobuild_genoo-build_1 bash -c \"source ~/.bashrc; emerge-websync; eix-update\""
-    scw exec --gateway=edge repository \
+    echo ">>> Update repository info..."
+    scw exec --gateway=edge hub \
+      "docker exec gentoobuild_genoo-build_1 bash -c \"source ~/.bashrc; emerge-webrsync; eix-update\""
+
+    echo ">>> Start emerging..."
+    scw exec --gateway=edge hub \
       "echo -------- $(date) -------- >> /var/log/emerge-update.log"
-    scw exec --gateway=edge repository \
+    scw exec --gateway=edge hub \
       "docker exec -d gentoobuild_genoo-build_1 emerge -uDN --with-bdeps=y --keep-going world >> /var/log/emerge-update.log"
 
     ids=`scw ps -q`
     for id in $ids; do
       echo "Starting update on $(scw inspect server:$id | jq ".[0].name") (~/.scw-docker/emerge-update.$id.log)"
-      nohup scw exec --gateway=edge $id "eix-sync; emerge -uDN --with-bdeps=y --keep-going world" & >> ~/.scw-docker/emerge-update.$id.log
+      nohup scw exec --gateway=edge $id "eix-sync; emerge -uDN --with-bdeps=y --keep-going world" >> ~/.scw-docker/emerge-update.$id.log &
     done
   fi
 }
